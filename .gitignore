@@ -1,0 +1,25 @@
+# Keil MDK 编译输出
+OBJ/
+*.o
+*.d
+*.crf
+*.lst
+*.axf
+*.lnp
+*.htm
+*.dep
+*.iex
+*.map
+*.build_log.htm
+*.sct
+
+# Keil 用户特定文件
+*.uvguix.*
+*.uvoptx
+JLinkSettings.ini
+DebugConfig/
+
+# 临时文件
+*.bak
+*.Bak
+*.tmp
