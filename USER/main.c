@@ -17,7 +17,9 @@
 u16 *UI_Buffer = (u16*)SRAM_BANK3_ADDR;
 
 #define UI_W 480
-#define UI_H 272 
+// UI_H 改为 800，适配 NT35510 竖屏（480x800），同时也自动适配其他屏幕
+// 原值 272 导致只刷新顶部 1/3，底部文字画在白底上不可见
+#define UI_H 800
 
 // 画图底层 API
 void UI_Clear(u16 color) {
@@ -77,7 +79,7 @@ OS_STK CONTROL_TASK_STK[CONTROL_STK_SIZE];
 void control_task(void *pdata);
 
 #define SENSOR_TASK_PRIO         5 
-#define SENSOR_STK_SIZE          256
+#define SENSOR_STK_SIZE          512  // 原256不足,float+FPU需要更大栈空间
 OS_STK SENSOR_TASK_STK[SENSOR_STK_SIZE];
 void sensor_task(void *pdata);
 
@@ -87,7 +89,7 @@ OS_STK COM_TASK_STK[COM_STK_SIZE];
 void com_task(void *pdata);
 
 #define UI_TASK_PRIO             7 
-#define UI_STK_SIZE              512
+#define UI_STK_SIZE              768  // 原512,大屏(480x800)绘图需要更大栈
 OS_STK UI_TASK_STK[UI_STK_SIZE];
 void ui_task(void *pdata);
 
@@ -485,6 +487,23 @@ void ui_task(void *pdata)
     u16 disp_h;
 
     pdata = pdata;
+    
+    // ========== 开机欢迎画面 ==========
+    // 在等待传感器数据之前,先显示启动画面
+    UI_Clear(BLACK);
+    UI_DrawLine(20, 20, lcddev.width-20, 20, BLUE);
+    UI_DrawLine(20, lcddev.height-20, lcddev.width-20, lcddev.height-20, BLUE);
+    UI_DrawLine(20, 20, 20, lcddev.height-20, BLUE);
+    UI_DrawLine(lcddev.width-20, 20, lcddev.width-20, lcddev.height-20, BLUE);
+    // 一次性输出到 LCD
+    LCD_Color_Fill(0, 0, lcddev.width-1, lcddev.height-1, UI_Buffer);
+    
+    POINT_COLOR = WHITE;
+    BACK_COLOR = BLACK;
+    LCD_ShowString((lcddev.width-200)/2, lcddev.height/2 - 40, 200, 24, 24, (u8*)"Gateway System");
+    LCD_ShowString((lcddev.width-200)/2, lcddev.height/2, 200, 16, 16, (u8*)"STM32F407 + UCOS-II");
+    LCD_ShowString((lcddev.width-200)/2, lcddev.height/2 + 30, 200, 16, 16, (u8*)"Initializing...");
+    // ========== 欢迎画面结束 ==========
     
     while(1)
     {
